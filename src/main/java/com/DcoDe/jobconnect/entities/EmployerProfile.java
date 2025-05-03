@@ -27,4 +27,7 @@ public class EmployerProfile {
 
     @Column(name = "job_title")
     private String jobTitle;
+    
+    @Column(name = "profile_picture_url") // New column for profile picture
+    private String profilePictureUrl;
 }

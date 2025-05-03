@@ -14,4 +14,5 @@ public class EmployerProfileUpdateDTO {
 
     private String phone;
     private String jobTitle;
+    // private String profilePictureUrl; 
 }

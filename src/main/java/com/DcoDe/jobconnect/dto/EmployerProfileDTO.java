@@ -12,4 +12,5 @@ public class EmployerProfileDTO {
     private String jobTitle;
     private String companyName;
     private Long companyId;
+    private String profilePictureUrl; 
 }

@@ -67,6 +67,7 @@ public class EmployerServiceImpl implements EmployerService {
         profile.setLastName(dto.getLastName());
         profile.setPhone(dto.getPhone());
         profile.setJobTitle(dto.getJobTitle());
+        // profile.setProfilePictureUrl(dto.getProfilePictureUrl()); 
 
         // Save updated profile
         profile = employerProfileRepository.save(profile);
@@ -182,6 +183,7 @@ public class EmployerServiceImpl implements EmployerService {
         dto.setEmail(profile.getUser().getEmail());
         dto.setPhone(profile.getPhone());
         dto.setJobTitle(profile.getJobTitle());
+        dto.setProfilePictureUrl(profile.getProfilePictureUrl()); 
 
         Company company = profile.getUser().getCompany();
         if (company != null) {
