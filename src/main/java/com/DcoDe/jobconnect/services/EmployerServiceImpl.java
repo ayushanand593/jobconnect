@@ -4,12 +4,15 @@ package com.DcoDe.jobconnect.services;
 import com.DcoDe.jobconnect.Exceptions.ResourceNotFoundException;
 import com.DcoDe.jobconnect.dto.EmployerProfileDTO;
 import com.DcoDe.jobconnect.dto.EmployerProfileUpdateDTO;
+import com.DcoDe.jobconnect.dto.JobDTO;
 import com.DcoDe.jobconnect.entities.Company;
 import com.DcoDe.jobconnect.entities.EmployerProfile;
+import com.DcoDe.jobconnect.entities.Job;
 import com.DcoDe.jobconnect.entities.User;
 import com.DcoDe.jobconnect.enums.UserRole;
 import com.DcoDe.jobconnect.repositories.CompanyRepository;
 import com.DcoDe.jobconnect.repositories.EmployerProfileRepository;
+import com.DcoDe.jobconnect.repositories.JobRepository;
 import com.DcoDe.jobconnect.repositories.UserRepository;
 import com.DcoDe.jobconnect.utils.SecurityUtils;
 
@@ -20,7 +23,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +36,8 @@ public class EmployerServiceImpl implements EmployerService {
     private final CompanyRepository companyRepository;
     // private final FileStorageService fileStorageService;
     private final S3FileStorageService s3FileStorageService;
+    private final JobRepository jobRepository;
+
 
     @Override
     public EmployerProfileDTO getCurrentEmployerProfile() {
@@ -148,6 +155,12 @@ public EmployerProfileDTO updateProfilePicture(MultipartFile file) {
     }
 
     @Override
+    public List<JobDTO> getJobsByEmployerId(Long employerId) {
+        List<Job> jobs = jobRepository.findAllByPostedById(employerId);
+        return jobs.stream().map(this::mapToJobDTO).collect(Collectors.toList());
+    }
+    
+    @Override
     public boolean isCompanyMember(User user, Long companyId) {
         if (user == null || user.getCompany() == null) {
             return false;
@@ -237,6 +250,19 @@ public EmployerProfileDTO updateProfilePicture(MultipartFile file) {
             dto.setCompanyId(company.getId());
         }
 
+        return dto;
+    }
+
+    private JobDTO mapToJobDTO(Job job) {
+        JobDTO dto = new JobDTO();
+        dto.setJobId(job.getJobId());
+        dto.setTitle(job.getTitle());
+        dto.setLocation(job.getLocation());
+        dto.setJobType(job.getJobType().toString());
+        dto.setExperienceRequired(job.getExperienceRequired());
+        dto.setStatus(job.getStatus().toString());
+        dto.setCreatedAt(job.getCreatedAt());
+        dto.setUpdatedAt(job.getUpdatedAt());
         return dto;
     }
 }
