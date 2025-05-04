@@ -426,24 +426,35 @@ public class EmployerController {
         EmployerProfileDTO updatedProfile = employerService.updateProfile(dto);
         return ResponseEntity.ok(updatedProfile);
     }
+    @PutMapping("/my-profile-picture")
+@PreAuthorize("hasAuthority('ROLE_EMPLOYER') or hasAuthority('EMPLOYER')")
+public ResponseEntity<EmployerProfileDTO> updateProfilePicture(@RequestParam("file") MultipartFile file) {
+    EmployerProfileDTO updatedProfile = employerService.updateProfilePicture(file);
+    return ResponseEntity.ok(updatedProfile);
+}
   
-   
+    // @PutMapping("/my-profile-picture")
+    // @PreAuthorize("hasAuthority('ROLE_EMPLOYER') or hasAuthority('EMPLOYER')")
+    // public ResponseEntity<EmployerProfileDTO> updateProfilePicture(@RequestParam("file") MultipartFile file) {
+    //     EmployerProfileDTO updatedProfile = employerService.updateProfilePicture(file);
+    //     return ResponseEntity.ok(updatedProfile);
+    // }
 
-    @PutMapping("/profile/{userId}/picture")
-    @PreAuthorize("hasAuthority('ROLE_EMPLOYER') or hasAuthority('EMPLOYER')")
-    public ResponseEntity<EmployerProfileDTO> updateProfilePicture(
-            @PathVariable Long userId,
-            @RequestParam("file") MultipartFile file) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        Long authenticatedUserId = getUserIdFromAuthentication(authentication);
+    // @PutMapping("/profile/{userId}/picture")
+    // @PreAuthorize("hasAuthority('ROLE_EMPLOYER') or hasAuthority('EMPLOYER')")
+    // public ResponseEntity<EmployerProfileDTO> updateProfilePicture(
+    //         @PathVariable Long userId,
+    //         @RequestParam("file") MultipartFile file) {
+    //     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    //     Long authenticatedUserId = getUserIdFromAuthentication(authentication);
 
-        if (!Objects.equals(authenticatedUserId, userId)) {
-            throw new AccessDeniedException("You are not authorized to update this profile picture");
-        }
+    //     if (!Objects.equals(authenticatedUserId, userId)) {
+    //         throw new AccessDeniedException("You are not authorized to update this profile picture");
+    //     }
 
-        EmployerProfileDTO updatedProfile = employerService.updateProfilePicture(file);
-        return ResponseEntity.ok(updatedProfile);
-    }
+    //     EmployerProfileDTO updatedProfile = employerService.updateProfilePicture(file);
+    //     return ResponseEntity.ok(updatedProfile);
+    // }
 
     @PutMapping("/promote/{employerId}")
     @PreAuthorize("hasAuthority('ROLE_EMPLOYER') or hasAuthority('EMPLOYER')")

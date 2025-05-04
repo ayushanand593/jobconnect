@@ -22,7 +22,7 @@ public class JobController {
     private final JobService jobService;
 
     @PostMapping
-    @PreAuthorize("hasRole('EMPLOYER')")
+    @PreAuthorize("hasAuthority('ROLE_EMPLOYER') or hasAuthority('EMPLOYER')")
     public ResponseEntity<JobDTO> createJob(@Valid @RequestBody JobCreateDTO jobDto) {
         JobDTO createdJob = jobService.createJob(jobDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdJob);
@@ -33,6 +33,11 @@ public class JobController {
         return ResponseEntity.ok(jobService.getJobById(id));
     }
 
+    @GetMapping("/jobId/{jobId}")
+    public ResponseEntity<JobDTO> getJobByJobId(@PathVariable String jobId) {
+        return ResponseEntity.ok(jobService.getJobByJobId(jobId));
+    }
+
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('EMPLOYER')")
     public ResponseEntity<JobDTO> updateJob(
@@ -41,10 +46,25 @@ public class JobController {
         return ResponseEntity.ok(jobService.updateJob(id, jobDto));
     }
 
+    @PutMapping("/jobId/{jobId}")
+    @PreAuthorize("hasRole('EMPLOYER')")
+    public ResponseEntity<JobDTO> updateJobByJobId(
+            @PathVariable String jobId,
+            @Valid @RequestBody JobCreateDTO jobDto) {
+        return ResponseEntity.ok(jobService.updateJobByJobId(jobId, jobDto));
+    }
+
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('EMPLOYER')")
     public ResponseEntity<Void> deleteJob(@PathVariable Long id) {
         jobService.deleteJob(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/jobId/{jobId}")
+    @PreAuthorize("hasRole('EMPLOYER')")
+    public ResponseEntity<Void> deleteJobByJobId(@PathVariable String jobId) {
+        jobService.deleteJobByJobId(jobId);
         return ResponseEntity.noContent().build();
     }
 
@@ -88,6 +108,15 @@ public class JobController {
             @PathVariable Long id,
             @RequestParam JobStatus status) {
         jobService.changeJobStatus(id, status);
+        return ResponseEntity.ok().build();
+    }
+
+    @PatchMapping("/jobId/{jobId}/status")
+    @PreAuthorize("hasRole('EMPLOYER')")
+    public ResponseEntity<Void> changeJobStatusByJobId(
+            @PathVariable String jobId,
+            @RequestParam JobStatus status) {
+        jobService.changeJobStatusByJobId(jobId, status);
         return ResponseEntity.ok().build();
     }
 

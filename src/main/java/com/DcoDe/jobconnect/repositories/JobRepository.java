@@ -16,6 +16,8 @@ import java.util.Optional;
 public interface JobRepository extends JpaRepository<Job, Long> {
     Page<Job> findByCompanyIdAndStatus(Long companyId, JobStatus status, Pageable pageable);
 
+    Optional<Job> findByJobId(String jobId);
+
     @Query("SELECT j FROM Job j WHERE j.status = 'OPEN' AND " +
             "(:keyword IS NULL OR LOWER(j.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
             "LOWER(j.description) LIKE LOWER(CONCAT('%', :keyword, '%'))) AND " +

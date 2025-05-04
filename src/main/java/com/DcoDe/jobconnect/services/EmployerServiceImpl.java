@@ -29,7 +29,8 @@ public class EmployerServiceImpl implements EmployerService {
     private final EmployerProfileRepository employerProfileRepository;
     private final UserRepository userRepository;
     private final CompanyRepository companyRepository;
-    private final FileStorageService fileStorageService;
+    // private final FileStorageService fileStorageService;
+    private final S3FileStorageService s3FileStorageService;
 
     @Override
     public EmployerProfileDTO getCurrentEmployerProfile() {
@@ -76,25 +77,70 @@ public class EmployerServiceImpl implements EmployerService {
     }
      
 
-    @Override
-    @Transactional
-    public EmployerProfileDTO updateProfilePicture(MultipartFile file) {
-        User currentUser = SecurityUtils.getCurrentUser();
-        if (currentUser == null || !currentUser.getRole().equals(UserRole.EMPLOYER)) {
-            throw new AccessDeniedException("Not authorized to update employer profile");
-        }
+    // @Override
+    // @Transactional
+    // public EmployerProfileDTO updateProfilePicture(MultipartFile file) {
+    //     User currentUser = SecurityUtils.getCurrentUser();
+    //     if (currentUser == null || !currentUser.getRole().equals(UserRole.EMPLOYER)) {
+    //         throw new AccessDeniedException("Not authorized to update employer profile");
+    //     }
 
-        EmployerProfile profile = employerProfileRepository.findByUserId(currentUser.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Employer profile not found"));
-
-
+    //     EmployerProfile profile = employerProfileRepository.findByUserId(currentUser.getId())
+    //             .orElseThrow(() -> new ResourceNotFoundException("Employer profile not found"));
 
 
-        // Save updated profile
-        profile = employerProfileRepository.save(profile);
 
-        return mapToEmployerProfileDTO(profile);
+
+    //     // Save updated profile
+    //     profile = employerProfileRepository.save(profile);
+
+    //     return mapToEmployerProfileDTO(profile);
+    // }
+//     @Override
+// @Transactional
+// public EmployerProfileDTO updateProfilePicture(MultipartFile file) {
+//     User currentUser = SecurityUtils.getCurrentUser();
+//     if (currentUser == null || !currentUser.getRole().equals(UserRole.EMPLOYER)) {
+//         throw new AccessDeniedException("Not authorized to update employer profile");
+//     }
+
+//     EmployerProfile profile = employerProfileRepository.findByUserId(currentUser.getId())
+//             .orElseThrow(() -> new ResourceNotFoundException("Employer profile not found"));
+
+//     // Upload the file and get the URL
+//     String profilePictureUrl = fileStorageService.uploadFile(file);
+
+//     // Update the profile picture URL
+//     profile.setProfilePictureUrl(profilePictureUrl);
+
+//     // Save the updated profile
+//     profile = employerProfileRepository.save(profile);
+
+//     return mapToEmployerProfileDTO(profile);
+// }
+
+@Override
+@Transactional
+public EmployerProfileDTO updateProfilePicture(MultipartFile file) {
+    User currentUser = SecurityUtils.getCurrentUser();
+    if (currentUser == null || !currentUser.getRole().equals(UserRole.EMPLOYER)) {
+        throw new AccessDeniedException("Not authorized to update employer profile");
     }
+
+    EmployerProfile profile = employerProfileRepository.findByUserId(currentUser.getId())
+            .orElseThrow(() -> new ResourceNotFoundException("Employer profile not found"));
+
+    // Upload the file to S3 and get the URL
+    String profilePictureUrl = s3FileStorageService.uploadFile(file);
+
+    // Update the profile picture URL
+    profile.setProfilePictureUrl(profilePictureUrl);
+
+    // Save the updated profile
+    profile = employerProfileRepository.save(profile);
+
+    return mapToEmployerProfileDTO(profile);
+}
 
     @Override
     public Optional<EmployerProfile> findProfileByUserId(Long userId) {

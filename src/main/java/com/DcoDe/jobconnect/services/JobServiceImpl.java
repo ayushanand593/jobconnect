@@ -88,6 +88,13 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
+    public JobDTO getJobByJobId(String jobId) {
+        Job job = jobRepository.findByJobId(jobId)
+                .orElseThrow(() -> new ResourceNotFoundException("Job not found with jobId: " + jobId));
+        return mapToJobDTO(job);
+    }
+
+    @Override
     @Transactional
     public JobDTO updateJob(Long id, JobCreateDTO jobDto) {
         User currentUser = SecurityUtils.getCurrentUser();
@@ -135,6 +142,25 @@ public class JobServiceImpl implements JobService {
 
     @Override
     @Transactional
+    public JobDTO updateJobByJobId(String jobId, JobCreateDTO jobDto) {
+        User currentUser = SecurityUtils.getCurrentUser();
+        if (currentUser == null) {
+            throw new AccessDeniedException("Not authorized to update jobs");
+        }
+
+        Job job = jobRepository.findByJobId(jobId)
+                .orElseThrow(() -> new ResourceNotFoundException("Job not found with jobId: " + jobId));
+
+        // Check if user has permission to update this job
+        if (!job.getCompany().getId().equals(currentUser.getCompany().getId())) {
+            throw new AccessDeniedException("Not authorized to update this job");
+        }
+
+        return updateJobDetails(job, jobDto);
+    }
+
+    @Override
+    @Transactional
     public void deleteJob(Long id) {
         User currentUser = SecurityUtils.getCurrentUser();
         if (currentUser == null) {
@@ -143,6 +169,25 @@ public class JobServiceImpl implements JobService {
 
         Job job = jobRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Job not found with id: " + id));
+
+        // Check if user has permission to delete this job
+        if (!job.getCompany().getId().equals(currentUser.getCompany().getId())) {
+            throw new AccessDeniedException("Not authorized to delete this job");
+        }
+
+        jobRepository.delete(job);
+    }
+
+    @Override
+    @Transactional
+    public void deleteJobByJobId(String jobId) {
+        User currentUser = SecurityUtils.getCurrentUser();
+        if (currentUser == null) {
+            throw new AccessDeniedException("Not authorized to delete jobs");
+        }
+
+        Job job = jobRepository.findByJobId(jobId)
+                .orElseThrow(() -> new ResourceNotFoundException("Job not found with jobId: " + jobId));
 
         // Check if user has permission to delete this job
         if (!job.getCompany().getId().equals(currentUser.getCompany().getId())) {
@@ -214,6 +259,26 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
+    @Transactional
+    public void changeJobStatusByJobId(String jobId, JobStatus status) {
+        User currentUser = SecurityUtils.getCurrentUser();
+        if (currentUser == null) {
+            throw new AccessDeniedException("Not authorized to update job status");
+        }
+
+        Job job = jobRepository.findByJobId(jobId)
+                .orElseThrow(() -> new ResourceNotFoundException("Job not found with jobId: " + jobId));
+
+        // Check if user has permission to update this job
+        if (!job.getCompany().getId().equals(currentUser.getCompany().getId())) {
+            throw new AccessDeniedException("Not authorized to update this job status");
+        }
+
+        job.setStatus(status);
+        jobRepository.save(job);
+    }
+
+    @Override
     public List<JobDTO> getFeaturedJobs() {
         List<Job> featuredJobs = jobRepository.findFeaturedJobs();
         return featuredJobs.stream()
@@ -261,4 +326,36 @@ public class JobServiceImpl implements JobService {
 
         return dto;
     }
+
+    private JobDTO updateJobDetails(Job job, JobCreateDTO jobDto) {
+        // Update job details
+        job.setTitle(jobDto.getTitle());
+        job.setLocation(jobDto.getLocation());
+        job.setJobType(JobType.valueOf(jobDto.getJobType()));
+        job.setExperienceRequired(jobDto.getExperienceRequired());
+        job.setDescription(jobDto.getDescription());
+        job.setRequirements(jobDto.getRequirements());
+        job.setResponsibilities(jobDto.getResponsibilities());
+        job.setSalaryRange(jobDto.getSalaryRange());
+
+        // Update skills
+        if (jobDto.getSkills() != null) {
+            job.getSkills().clear();
+            for (String skillName : jobDto.getSkills()) {
+                Skill skill = skillRepository.findByNameIgnoreCase(skillName)
+                        .orElseGet(() -> {
+                            Skill newSkill = new Skill();
+                            newSkill.setName(skillName);
+                            return skillRepository.save(newSkill);
+                        });
+                job.getSkills().add(skill);
+            }
+        }
+
+        // Save updated job
+        job = jobRepository.save(job);
+
+        return mapToJobDTO(job);
+    }
+
 }
