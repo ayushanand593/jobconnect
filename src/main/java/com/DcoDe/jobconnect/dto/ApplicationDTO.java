@@ -8,7 +8,8 @@ import java.time.LocalDateTime;
 @Data
 public class ApplicationDTO {
     private Long id;
-    private Long jobId;
+    // private Long jobId;
+    private String jobId;
     private String jobTitle;
     private String companyName;
     private String candidateName;

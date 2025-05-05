@@ -1,6 +1,7 @@
 package com.DcoDe.jobconnect.repositories;
 
 import com.DcoDe.jobconnect.entities.Application;
+import com.DcoDe.jobconnect.entities.Job;
 import com.DcoDe.jobconnect.enums.ApplicationStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -18,8 +19,11 @@ import java.util.Set;
 public interface ApplicationRepository extends JpaRepository <Application,Long> {
 
     Page<Application> findByCandidateId(Long candidateId, Pageable pageable);
-    Page<Application> findByJobId(Long jobId, Pageable pageable);
-    Page<Application> findByJobIdAndStatus(Long jobId, ApplicationStatus status, Pageable pageable);
+    // Page<Application> findByJobId(Long jobId, Pageable pageable);
+    // Page<Application> findByJobIdAndStatus(Long jobId, ApplicationStatus status, Pageable pageable);
+
+    @Query("SELECT a FROM Application a WHERE a.job.jobId = :jobId")
+    List<Application> findByJobId(@Param("jobId") String jobId);
 
     @Query("SELECT a FROM Application a WHERE a.job.id = :jobId AND a.candidate.id = :candidateId")
     Optional<Application> findByJobIdAndCandidateId(Long jobId, Long candidateId);
@@ -40,6 +44,12 @@ public interface ApplicationRepository extends JpaRepository <Application,Long> 
             @Param("candidateId") Long candidateId,
             @Param("companyId") Long companyId);
 
+            @Query("SELECT a FROM Application a WHERE a.job.jobId = :jobId")
+            Page<Application> findByJobId(@Param("jobId") String jobId, Pageable pageable);
+        
+            @Query("SELECT a FROM Application a WHERE a.job.jobId = :jobId AND a.status = :status")
+            Page<Application> findByJobIdAndStatus(@Param("jobId") String jobId, @Param("status") ApplicationStatus status, Pageable pageable);
+         
 //    @Query("SELECT COUNT(a) > 0 FROM Application a WHERE a.candidate.id = :candidateId AND a.job.company.id = :companyId")
 //    boolean existsByCandidateIdAndCompanyId(Long candidateId, Long companyId);
 

@@ -13,7 +13,6 @@ public class CandidateProfileUpdateDTO {
 
     @NotBlank(message = "Last name is required")
     private String lastName;
-
     private String phone;
     private String headline;
     private String summary;

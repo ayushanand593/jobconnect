@@ -7,5 +7,5 @@ import lombok.Data;
 public class SkillDTO {
     private Long id;
     private String name;
-    private Integer experienceYears; // For candidate skills
+    // private Integer experienceYears; // For candidate skills
 }

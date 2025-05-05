@@ -1,11 +1,15 @@
 package com.DcoDe.jobconnect.controllers;
 
+import com.DcoDe.jobconnect.dto.ApplicationCreateDTO;
 import com.DcoDe.jobconnect.dto.JobCreateDTO;
 import com.DcoDe.jobconnect.dto.JobDTO;
 import com.DcoDe.jobconnect.enums.JobStatus;
+import com.DcoDe.jobconnect.services.ApplicationService;
 import com.DcoDe.jobconnect.services.JobService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +24,8 @@ import java.util.List;
 public class JobController {
 
     private final JobService jobService;
+    @Autowired
+    private final ApplicationService applicationService;
 
     @PostMapping
     @PreAuthorize("hasAuthority('ROLE_EMPLOYER') or hasAuthority('EMPLOYER')")
@@ -67,6 +73,15 @@ public class JobController {
         jobService.deleteJobByJobId(jobId);
         return ResponseEntity.noContent().build();
     }
+
+       @PostMapping("/{jobId}/apply")
+    @PreAuthorize("hasRole('CANDIDATE')")
+    public ResponseEntity<String> applyToJob(
+        @PathVariable String jobId,
+        @Valid @RequestBody ApplicationCreateDTO applicationCreateDTO) {
+    applicationService.applyToJob(jobId, applicationCreateDTO);
+    return ResponseEntity.ok("Application submitted successfully");
+}
 
     @GetMapping("/company/{companyId}")
     public ResponseEntity<Page<JobDTO>> getJobsByCompany(

@@ -18,7 +18,6 @@ import java.util.Set;
 public class Company {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @EqualsAndHashCode.Include
     private Long id;
 
     @Column(name = "company_name", nullable = false)

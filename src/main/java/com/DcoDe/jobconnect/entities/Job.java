@@ -20,7 +20,6 @@ import java.util.Set;
 public class Job {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @EqualsAndHashCode.Include
     private Long id;
 
     @ManyToOne
@@ -71,11 +70,9 @@ public class Job {
             joinColumns = @JoinColumn(name = "job_id"),
             inverseJoinColumns = @JoinColumn(name = "skill_id")
     )
-    @EqualsAndHashCode.Exclude
     private Set<Skill> skills = new HashSet<>();
 
     @OneToMany(mappedBy = "job")
-    @EqualsAndHashCode.Exclude
     private List<Application> applications = new ArrayList<>();
 
     @PrePersist

@@ -26,14 +26,12 @@ public class CompanyController {
     private final FileStorageService fileStorageService;
 
     @PostMapping("/register")
-    @PreAuthorize("hasRole('EMPLOYER')")
     public ResponseEntity<CompanyDetailDTO> registerCompany(@Valid @RequestBody CompanyRegistrationDTO dto) {
         CompanyDetailDTO registeredCompany = companyService.registerCompany(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(registeredCompany);
     }
 
     @GetMapping("/profile")
-    @PreAuthorize("hasRole('EMPLOYER')")
     public ResponseEntity<CompanyDetailDTO> getCurrentProfile() {
         return ResponseEntity.ok(companyService.getCurrentCompanyProfile());
     }

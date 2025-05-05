@@ -1,12 +1,16 @@
 package com.DcoDe.jobconnect.entities;
 
 import com.DcoDe.jobconnect.enums.UserRole;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 @Entity
 @Table(name = "users")
@@ -29,10 +33,12 @@ public class User {
 
     @ManyToOne
     @JoinColumn(name = "company_id")
-    @EqualsAndHashCode.Exclude
     private Company company;  // For company role
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+   @JsonIgnore // Add this to prevent circular reference in JSON serialization
+    @ToString.Exclude // For lombok users
+    @EqualsAndHashCode.Exclude // This excludes from equals/hashCode calculations
     private Candidate candidateProfile;  // For CANDIDATE role
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
@@ -54,6 +60,24 @@ public class User {
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
     }
+
+     // Fix for hashCode/equals to prevent circular reference
+     @Override
+     public int hashCode() {
+         return Objects.hash(id, email, role);
+         // Don't include candidateProfile in hashCode calculation
+     }
+     
+     @Override
+     public boolean equals(Object obj) {
+         if (this == obj) return true;
+         if (obj == null || getClass() != obj.getClass()) return false;
+         User user = (User) obj;
+         return Objects.equals(id, user.id) && 
+                Objects.equals(email, user.email) && 
+                role == user.role;
+         // Don't include candidateProfile in equals comparison
+     }
 }
 
 

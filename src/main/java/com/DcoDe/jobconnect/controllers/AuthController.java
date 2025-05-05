@@ -42,11 +42,27 @@ public class AuthController {
                 ));
         return ResponseEntity.ok(companyService.addEmployerToCompany(dto));
     }
+    // @PostMapping("/register/candidate")
+    // public ResponseEntity<CandidateProfileDTO> registerCandidate(
+    //         @Valid @RequestBody CandidateRegistrationDTO dto) {
+    //     return ResponseEntity.status(HttpStatus.CREATED)
+    //             .body(candidateService.registerCandidate(dto));
+    // }
     @PostMapping("/register/candidate")
     public ResponseEntity<CandidateProfileDTO> registerCandidate(
             @Valid @RequestBody CandidateRegistrationDTO dto) {
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(candidateService.registerCandidate(dto));
+        
+        // Log the request to help diagnose issues
+        System.out.println("Received candidate registration request for: " + dto.getEmail());
+        
+        try {
+            CandidateProfileDTO result = candidateService.registerCandidate(dto);
+            return ResponseEntity.status(HttpStatus.CREATED).body(result);
+        } catch (Exception e) {
+            // Log the error
+            System.err.println("Error registering candidate: " + e.getMessage());
+            throw e;
+        }
     }
 
     @PostMapping("/login")

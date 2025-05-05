@@ -2,12 +2,17 @@ package com.DcoDe.jobconnect.entities;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Table(name = "candidates")
@@ -20,6 +25,9 @@ public class Candidate {
 
     @OneToOne
     @JoinColumn(name = "user_id", nullable = false)
+    @JsonIgnore // Add this to prevent circular reference in JSON serialization
+    @ToString.Exclude // For lombok users
+    @EqualsAndHashCode.Exclude
     private User user;
 
     @Column(name = "first_name", nullable = false)
@@ -48,4 +56,21 @@ public class Candidate {
 
     @OneToMany(mappedBy = "candidate")
     private List<Application> applications = new ArrayList<>();
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, firstName, lastName, phone, headline, summary, experienceYears, resumeUrl);
+        // Don't include user in hashCode calculation
+    }
+    
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        Candidate candidate = (Candidate) obj;
+        return Objects.equals(id, candidate.id) && 
+               Objects.equals(firstName, candidate.firstName) && 
+               Objects.equals(lastName, candidate.lastName);
+        // Don't include user in equals comparison
+    }
 }
