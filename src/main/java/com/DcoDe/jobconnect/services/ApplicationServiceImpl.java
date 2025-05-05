@@ -16,6 +16,8 @@ import com.DcoDe.jobconnect.utils.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -76,29 +78,35 @@ public class ApplicationServiceImpl implements ApplicationService {
 
         @Override
         @Transactional
-    public void applyToJob(String jobId, ApplicationCreateDTO applicationCreateDTO) {
-        Job job = jobRepository.findByJobId(jobId)
-                .orElseThrow(() -> new ResourceNotFoundException("Job not found with ID: " + jobId));
-
-        User currentUser = SecurityUtils.getCurrentUser();
-        if (currentUser == null || currentUser.getCandidateProfile() == null) {
-            throw new AccessDeniedException("Only candidates can apply for jobs");
+        public ApplicationDTO applyToJob(String jobId, ApplicationCreateDTO applicationCreateDTO) {
+            // Fetch the job by jobId
+            Job job = jobRepository.findByJobId(jobId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Job not found with ID: " + jobId));
+    
+            // Get the current authenticated candidate
+            User currentUser = SecurityUtils.getCurrentUser();
+            if (currentUser == null || currentUser.getCandidateProfile() == null) {
+                throw new AccessDeniedException("Only candidates can apply for jobs");
+            }
+    
+            Candidate candidate = currentUser.getCandidateProfile();
+    
+            // Create a new application
+            Application application = new Application();
+            application.setJob(job);
+            application.setCandidate(candidate);
+            application.setResumeUrl(applicationCreateDTO.getResumeUrl());
+            application.setCoverLetter(applicationCreateDTO.getCoverLetter());
+            application.setStatus(ApplicationStatus.SUBMITTED);
+            application.setCreatedAt(LocalDateTime.now());
+            application.setUpdatedAt(LocalDateTime.now());
+    
+            // Save the application
+            application = applicationRepository.save(application);
+    
+            // Map the application to ApplicationDTO
+            return mapToApplicationDTO(application);
         }
-
-        Candidate candidate = currentUser.getCandidateProfile();
-
-        // Create a new application
-        Application application = new Application();
-        application.setJob(job);
-        application.setCandidate(candidate);
-        application.setResumeUrl(applicationCreateDTO.getResumeUrl());
-        application.setCoverLetter(applicationCreateDTO.getCoverLetter());
-        application.setStatus(ApplicationStatus.SUBMITTED);
-        application.setCreatedAt(LocalDateTime.now());
-        application.setUpdatedAt(LocalDateTime.now());
-
-        applicationRepository.save(application);
-    }
 
 
     // 3. Update ApplicationServiceImpl methods
@@ -122,6 +130,29 @@ public Page<ApplicationDTO> getApplicationsByJob(String jobId, int page, int siz
 
     return applications.map(this::mapToApplicationDTO);
 }
+
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ApplicationDTO> getApplicationsForJob(String jobId) {
+        // Fetch the job by jobId
+        Job job = jobRepository.findByJobId(jobId)
+                .orElseThrow(() -> new ResourceNotFoundException("Job not found with ID: " + jobId));
+
+        // Get the current authenticated employer
+        User currentUser = SecurityUtils.getCurrentUser();
+        if (currentUser == null || !job.getPostedBy().getId().equals(currentUser.getId())) {
+            throw new AccessDeniedException("You are not authorized to view applications for this job");
+        }
+
+        // Fetch applications for the job
+        List<Application> applications = applicationRepository.findByJobId(jobId);
+
+        // Map applications to ApplicationDTO
+        return applications.stream()
+                .map(this::mapToApplicationDTO)
+                .collect(Collectors.toList());
+    }
 
     @Override
     public ApplicationDTO getApplicationById(Long id) {

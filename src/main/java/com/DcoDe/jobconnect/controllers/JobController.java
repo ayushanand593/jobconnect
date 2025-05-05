@@ -1,6 +1,7 @@
 package com.DcoDe.jobconnect.controllers;
 
 import com.DcoDe.jobconnect.dto.ApplicationCreateDTO;
+import com.DcoDe.jobconnect.dto.ApplicationDTO;
 import com.DcoDe.jobconnect.dto.JobCreateDTO;
 import com.DcoDe.jobconnect.dto.JobDTO;
 import com.DcoDe.jobconnect.enums.JobStatus;
@@ -76,11 +77,18 @@ public class JobController {
 
        @PostMapping("/{jobId}/apply")
     @PreAuthorize("hasRole('CANDIDATE')")
-    public ResponseEntity<String> applyToJob(
+    public ResponseEntity<ApplicationDTO> applyToJob(
         @PathVariable String jobId,
         @Valid @RequestBody ApplicationCreateDTO applicationCreateDTO) {
-    applicationService.applyToJob(jobId, applicationCreateDTO);
-    return ResponseEntity.ok("Application submitted successfully");
+   ApplicationDTO applicationDTO = applicationService.applyToJob(jobId, applicationCreateDTO);
+    return ResponseEntity.status(HttpStatus.CREATED).body(applicationDTO);
+}
+
+@GetMapping("/{jobId}/applications")
+@PreAuthorize("hasRole('EMPLOYER')")
+public ResponseEntity<List<ApplicationDTO>> getApplicationsForJob(@PathVariable String jobId) {
+    List<ApplicationDTO> applications = applicationService.getApplicationsForJob(jobId);
+    return ResponseEntity.ok(applications);
 }
 
     @GetMapping("/company/{companyId}")

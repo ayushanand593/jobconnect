@@ -60,12 +60,14 @@ private final UserDetailsServiceImpl userDetailsService;
                 .authorizeHttpRequests(auth -> auth
                         // .requestMatchers(HttpMethod.POST, "/api/auth/register/candidate").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/jobs/**").permitAll()
                         .requestMatchers("/api/companies/register").permitAll()
                         .requestMatchers("/api/companies/*/jobs").permitAll()
                         .requestMatchers("/api/companies/search").permitAll()
                         .requestMatchers("/api/companies/{companyUniqueId}").permitAll()
                         .requestMatchers("/api/companies/profile").permitAll() // Overridden by @PreAuthorize
                         .requestMatchers("/api/debug/auth").permitAll()
+                        
                         // .requestMatchers("/error").permitAll()
                         .anyRequest().authenticated()
                 )
