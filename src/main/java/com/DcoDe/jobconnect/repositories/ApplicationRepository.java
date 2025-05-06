@@ -25,6 +25,9 @@ public interface ApplicationRepository extends JpaRepository <Application,Long> 
     @Query("SELECT a FROM Application a WHERE a.job.jobId = :jobId")
     List<Application> findByJobId(@Param("jobId") String jobId);
 
+    @Query("SELECT a FROM Application a WHERE a.job.jobId = :jobId AND a.status = :status")
+    Page<Application> findByJobIdAndStatus(@Param("jobId") String jobId, @Param("status") ApplicationStatus status, Pageable pageable);
+
     @Query("SELECT a FROM Application a WHERE a.job.id = :jobId AND a.candidate.id = :candidateId")
     Optional<Application> findByJobIdAndCandidateId(Long jobId, Long candidateId);
 
@@ -47,8 +50,8 @@ public interface ApplicationRepository extends JpaRepository <Application,Long> 
             @Query("SELECT a FROM Application a WHERE a.job.jobId = :jobId")
             Page<Application> findByJobId(@Param("jobId") String jobId, Pageable pageable);
         
-            @Query("SELECT a FROM Application a WHERE a.job.jobId = :jobId AND a.status = :status")
-            Page<Application> findByJobIdAndStatus(@Param("jobId") String jobId, @Param("status") ApplicationStatus status, Pageable pageable);
+            // @Query("SELECT a FROM Application a WHERE a.job.jobId = :jobId AND a.status = :status")
+            // Page<Application> findByJobIdAndStatus(@Param("jobId") String jobId, @Param("status") ApplicationStatus status, Pageable pageable);
          
 //    @Query("SELECT COUNT(a) > 0 FROM Application a WHERE a.candidate.id = :candidateId AND a.job.company.id = :companyId")
 //    boolean existsByCandidateIdAndCompanyId(Long candidateId, Long companyId);

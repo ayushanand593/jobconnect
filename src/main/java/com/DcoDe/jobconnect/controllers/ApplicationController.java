@@ -9,6 +9,8 @@ import com.DcoDe.jobconnect.services.ApplicationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -59,15 +61,14 @@ public ResponseEntity<Page<ApplicationDTO>> getApplicationsByJob(
     //         @RequestParam(defaultValue = "10") int size) {
     //     return ResponseEntity.ok(applicationService.getApplicationsByJobAndStatus(jobId, status, page, size));
     // }
-
     @GetMapping("/job/{jobId}/status/{status}")
-public ResponseEntity<Page<ApplicationDTO>> getApplicationsByJobAndStatus(
-        @PathVariable String jobId,  // Changed from Long to String
-        @PathVariable ApplicationStatus status,
-        @RequestParam(defaultValue = "0") int page,
-        @RequestParam(defaultValue = "10") int size) {
-    return ResponseEntity.ok(applicationService.getApplicationsByJobAndStatus(jobId, status, page, size));
-}
+    public ResponseEntity<Page<ApplicationDTO>> getApplicationsByJobAndStatus(
+            @PathVariable String jobId,
+            @PathVariable ApplicationStatus status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(applicationService.getApplicationsByJobAndStatus(jobId, status, page, size));
+    }
 
 
     @GetMapping("/{id}")
@@ -75,15 +76,38 @@ public ResponseEntity<Page<ApplicationDTO>> getApplicationsByJobAndStatus(
         return ResponseEntity.ok(applicationService.getApplicationById(id));
     }
 
+    // @PatchMapping("/{id}/status")
+    // public ResponseEntity<Void> updateApplicationStatus(
+    //         @PathVariable Long id,
+    //         @RequestParam ApplicationStatus status) {
+    //     applicationService.updateApplicationStatus(id, status);
+    //     return ResponseEntity.ok().build();
+    // }
+
     @PatchMapping("/{id}/status")
-    public ResponseEntity<Void> updateApplicationStatus(
-            @PathVariable Long id,
-            @RequestParam ApplicationStatus status) {
-        applicationService.updateApplicationStatus(id, status);
-        return ResponseEntity.ok().build();
+public ResponseEntity<Void> updateApplicationStatus(
+        @PathVariable Long id,
+        @RequestBody Map<String, String> payload) {
+    
+    // Parse the status from the request body
+    String statusStr = payload.get("status");
+    if (statusStr == null) {
+        throw new IllegalArgumentException("Status is required");
     }
+    
+    ApplicationStatus status;
+    try {
+        status = ApplicationStatus.valueOf(statusStr);
+    } catch (IllegalArgumentException e) {
+        throw new IllegalArgumentException("Invalid status value: " + statusStr);
+    }
+    
+    applicationService.updateApplicationStatus(id, status);
+    return ResponseEntity.ok().build();
+}
 
     @GetMapping("/company")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Page<ApplicationDTO>> getCompanyApplications(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {

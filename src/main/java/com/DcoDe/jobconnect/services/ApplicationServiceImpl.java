@@ -172,15 +172,35 @@ public Page<ApplicationDTO> getApplicationsByJob(String jobId, int page, int siz
         return mapToApplicationDTO(application);
     }
 
-    @Override
-public Page<ApplicationDTO> getApplicationsByJobAndStatus(String jobId, ApplicationStatus status, int page, int size) {  // Changed from Long to String
+//     @Override
+// public Page<ApplicationDTO> getApplicationsByJobAndStatus(String jobId, ApplicationStatus status, int page, int size) {  // Changed from Long to String
+//     User currentUser = SecurityUtils.getCurrentUser();
+//     if (currentUser == null) {
+//         throw new AccessDeniedException("Not authorized to view applications");
+//     }
+
+//     // Verify job belongs to user's company
+//     Job job = jobRepository.findByJobId(jobId)  // Changed from findById
+//             .orElseThrow(() -> new ResourceNotFoundException("Job not found with id: " + jobId));
+
+//     if (!job.getCompany().getId().equals(currentUser.getCompany().getId())) {
+//         throw new AccessDeniedException("Not authorized to view applications for this job");
+//     }
+
+//     Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+//     Page<Application> applications = applicationRepository.findByJobIdAndStatus(job.getId().toString(), status, pageable);  // Use internal numeric ID
+
+//     return applications.map(this::mapToApplicationDTO);
+// }
+@Override
+public Page<ApplicationDTO> getApplicationsByJobAndStatus(String jobId, ApplicationStatus status, int page, int size) {
     User currentUser = SecurityUtils.getCurrentUser();
     if (currentUser == null) {
         throw new AccessDeniedException("Not authorized to view applications");
     }
 
     // Verify job belongs to user's company
-    Job job = jobRepository.findByJobId(jobId)  // Changed from findById
+    Job job = jobRepository.findByJobId(jobId)
             .orElseThrow(() -> new ResourceNotFoundException("Job not found with id: " + jobId));
 
     if (!job.getCompany().getId().equals(currentUser.getCompany().getId())) {
@@ -188,30 +208,50 @@ public Page<ApplicationDTO> getApplicationsByJobAndStatus(String jobId, Applicat
     }
 
     Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-    Page<Application> applications = applicationRepository.findByJobIdAndStatus(job.getId().toString(), status, pageable);  // Use internal numeric ID
+    // Use the string jobId directly in the repository call
+    Page<Application> applications = applicationRepository.findByJobIdAndStatus(jobId, status, pageable);
 
     return applications.map(this::mapToApplicationDTO);
 }
 
+    // @Override
+    // @Transactional
+    // public void updateApplicationStatus(Long id, ApplicationStatus status) {
+    //     User currentUser = SecurityUtils.getCurrentUser();
+    //     if (currentUser == null) {
+    //         throw new AccessDeniedException("Not authorized to update application status");
+    //     }
+
+    //     Application application = applicationRepository.findById(id)
+    //             .orElseThrow(() -> new ResourceNotFoundException("Application not found with id: " + id));
+
+    //     // Check if the application belongs to user's company
+    //     if (!application.getJob().getCompany().getId().equals(currentUser.getCompany().getId())) {
+    //         throw new AccessDeniedException("Not authorized to update this application");
+    //     }
+
+    //     application.setStatus(status);
+    //     applicationRepository.save(application);
+    // }
     @Override
-    @Transactional
-    public void updateApplicationStatus(Long id, ApplicationStatus status) {
-        User currentUser = SecurityUtils.getCurrentUser();
-        if (currentUser == null) {
-            throw new AccessDeniedException("Not authorized to update application status");
-        }
-
-        Application application = applicationRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Application not found with id: " + id));
-
-        // Check if the application belongs to user's company
-        if (!application.getJob().getCompany().getId().equals(currentUser.getCompany().getId())) {
-            throw new AccessDeniedException("Not authorized to update this application");
-        }
-
-        application.setStatus(status);
-        applicationRepository.save(application);
+@Transactional
+public void updateApplicationStatus(Long id, ApplicationStatus status) {
+    User currentUser = SecurityUtils.getCurrentUser();
+    if (currentUser == null) {
+        throw new AccessDeniedException("Not authorized to update application status");
     }
+
+    Application application = applicationRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Application not found with id: " + id));
+
+    // Check if the application belongs to user's company
+    if (!application.getJob().getCompany().getId().equals(currentUser.getCompany().getId())) {
+        throw new AccessDeniedException("Not authorized to update this application");
+    }
+
+    application.setStatus(status);
+    applicationRepository.save(application);
+}
 
     @Override
     public Page<ApplicationDTO> getCompanyApplications(int page, int size) {
@@ -234,10 +274,11 @@ public Page<ApplicationDTO> getApplicationsByJobAndStatus(String jobId, Applicat
     private ApplicationDTO mapToApplicationDTO(Application application) {
         ApplicationDTO dto = new ApplicationDTO();
         dto.setId(application.getId());
-        dto.setJobId(application.getJob().getId().toString());
+        dto.setJobId(application.getJob().getJobId());
         dto.setJobTitle(application.getJob().getTitle());
         dto.setCompanyName(application.getJob().getCompany().getCompanyName());
         dto.setCandidateName(application.getCandidate().getFirstName() + " " + application.getCandidate().getLastName());
+        dto.setCandidateId(application.getCandidate().getId());
         dto.setResumeUrl(application.getResumeUrl());
         dto.setCoverLetter(application.getCoverLetter());
         dto.setStatus(application.getStatus().name());

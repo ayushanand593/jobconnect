@@ -13,6 +13,7 @@ public class ApplicationDTO {
     private String jobTitle;
     private String companyName;
     private String candidateName;
+    private Long candidateId;
     private String resumeUrl;
     private String coverLetter;
     private String status;
