@@ -67,7 +67,7 @@ private final UserDetailsServiceImpl userDetailsService;
                         .requestMatchers("/api/companies/{companyUniqueId}").permitAll()
                         .requestMatchers("/api/companies/profile").permitAll() // Overridden by @PreAuthorize
                         .requestMatchers("/api/debug/auth").permitAll()
-                        
+                        .requestMatchers("/api/candidates/search").permitAll()
                         // .requestMatchers("/error").permitAll()
                         .anyRequest().authenticated()
                 )

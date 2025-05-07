@@ -4,6 +4,7 @@ package com.DcoDe.jobconnect.controllers;
 
 
 import com.DcoDe.jobconnect.dto.CandidateSearchDTO;
+import com.DcoDe.jobconnect.dto.CandidateSearchRequestDTO;
 import com.DcoDe.jobconnect.services.CandidateSearchService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -17,7 +18,7 @@ import java.util.List;
  * Controller for handling candidate search operations by employers
  */
 @RestController
-@RequestMapping("/api/candidate-search")
+@RequestMapping("/api/candidates/search")
 @RequiredArgsConstructor
 public class CandidateSearchController {
 
@@ -34,21 +35,28 @@ public class CandidateSearchController {
      * @param size Page size
      * @return Page of candidate search results
      */
-    @GetMapping
-    @PreAuthorize("hasRole('EMPLOYER')")
-    public ResponseEntity<Page<CandidateSearchDTO>> searchCandidates(
-            @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) List<String> skills,
-            @RequestParam(required = false) Integer minExperience,
-            @RequestParam(required = false) Integer maxExperience,
+    // @GetMapping
+    // @PreAuthorize("hasRole('EMPLOYER')")
+    // public ResponseEntity<Page<CandidateSearchDTO>> searchCandidates(
+    //         @RequestParam(required = false) String keyword,
+    //         @RequestParam(required = false) List<String> skills,
+    //         @RequestParam(required = false) Integer minExperience,
+    //         @RequestParam(required = false) Integer maxExperience,
+    //         @RequestParam(defaultValue = "0") int page,
+    //         @RequestParam(defaultValue = "10") int size) {
+
+    //     Page<CandidateSearchDTO> candidates = candidateSearchService.searchCandidates(
+    //             keyword, skills, minExperience, maxExperience, page, size);
+    //     return ResponseEntity.ok(candidates);
+    // }
+@PostMapping
+@PreAuthorize("hasRole('EMPLOYER')")
+public ResponseEntity<Page<CandidateSearchDTO>> searchCandidates(
+            @RequestBody CandidateSearchRequestDTO searchRequest,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-
-        Page<CandidateSearchDTO> candidates = candidateSearchService.searchCandidates(
-                keyword, skills, minExperience, maxExperience, page, size);
-        return ResponseEntity.ok(candidates);
-    }
-
+    return ResponseEntity.ok(candidateSearchService.searchCandidates(searchRequest, page, size));
+}
     /**
      * Get detailed information about a specific candidate
      *

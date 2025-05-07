@@ -17,16 +17,24 @@ public interface CandidateRepository extends JpaRepository<Candidate, Long> {
 
     @Query("SELECT c FROM Candidate c JOIN FETCH c.skills WHERE c.id = :id")
     Optional<Candidate> findByIdWithSkills(Long id);
-    @Query("SELECT c FROM Candidate c LEFT JOIN c.skills s WHERE " +
-            "(:keyword IS NULL OR LOWER(c.firstName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-            "LOWER(c.lastName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-            "LOWER(c.headline) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-            "LOWER(c.summary) LIKE LOWER(CONCAT('%', :keyword, '%'))) AND " +
-            "(:skills IS NULL OR s.name IN :skills) AND " +
-            "(:minExperience IS NULL OR c.experienceYears >= :minExperience) AND " +
-            "(:maxExperience IS NULL OR c.experienceYears <= :maxExperience)")
-    Page<Candidate> searchCandidates(String keyword, List<String> skills, Integer minExperience,
-                                     Integer maxExperience, Pageable pageable);
+    
+    @Query("SELECT DISTINCT c FROM Candidate c LEFT JOIN c.skills s WHERE " +
+        "(:keyword IS NULL OR LOWER(c.firstName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+        "LOWER(c.lastName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+        "LOWER(c.headline) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+        "LOWER(c.summary) LIKE LOWER(CONCAT('%', :keyword, '%'))) AND " +
+        "(:minExperience IS NULL OR c.experienceYears >= :minExperience) AND " + // This line ensures minimum experience
+        "(:maxExperience IS NULL OR c.experienceYears <= :maxExperience) AND " + // This line ensures maximum experience
+        "(:skills IS NULL OR s.name IN :skills) " +
+        "GROUP BY c.id " +  // Add grouping to avoid duplicates
+        "HAVING (:skills IS NULL OR COUNT(DISTINCT s.name) = :skillsCount)")  // Ensure all required skills are present
+Page<Candidate> searchCandidates(
+        @Param("keyword") String keyword, 
+        @Param("skills") List<String> skills,
+        @Param("skillsCount") Long skillsCount,
+        @Param("minExperience") Integer minExperience,
+        @Param("maxExperience") Integer maxExperience, 
+        Pageable pageable);
 
     @Query("SELECT DISTINCT c FROM Candidate c JOIN c.skills s " +
             "WHERE s.name IN :skillNames")
