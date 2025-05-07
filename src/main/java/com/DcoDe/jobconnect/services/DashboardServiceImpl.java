@@ -1,6 +1,10 @@
 package com.DcoDe.jobconnect.services;
 
 
+import com.DcoDe.jobconnect.Exceptions.ResourceNotFoundException;
+import com.DcoDe.jobconnect.dto.ApplicationDetailDTO;
+import com.DcoDe.jobconnect.dto.CandidateDashboardStatsDTO;
+import com.DcoDe.jobconnect.dto.CandidateDashboardStatsDTO.ApplicationSummaryDTO;
 import com.DcoDe.jobconnect.dto.DashboardStatsDTO;
 import com.DcoDe.jobconnect.entities.Application;
 import com.DcoDe.jobconnect.entities.Job;
@@ -93,6 +97,61 @@ public class DashboardServiceImpl implements DashboardService {
         return calculateStats(companyJobs, allApplications, periodApplications);
     }
 
+   @Override
+public CandidateDashboardStatsDTO getCandidateDashboardStats(LocalDate startDate, LocalDate endDate) {
+    User currentUser = SecurityUtils.getCurrentUser();
+    if (currentUser == null || currentUser.getCandidateProfile() == null) {
+        throw new AccessDeniedException("Not authorized to view candidate dashboard statistics");
+    }
+
+    Long candidateId = currentUser.getCandidateProfile().getId();
+    LocalDateTime startDateTime = startDate.atStartOfDay();
+    LocalDateTime endDateTime = endDate.plusDays(1).atStartOfDay();
+
+    // Get all applications for the candidate
+    List<Application> allApplications = applicationRepository.findByCandidateId(candidateId);
+
+    // Get applications within the date range
+    List<Application> periodApplications = allApplications.stream()
+        .filter(app -> !app.getCreatedAt().isBefore(startDateTime) && !app.getCreatedAt().isAfter(endDateTime))
+        .collect(Collectors.toList());
+
+    return calculateCandidateStats(allApplications, periodApplications);
+}
+
+@Override
+public List<ApplicationDetailDTO> getCandidateApplications() {
+    User currentUser = SecurityUtils.getCurrentUser();
+    if (currentUser == null || currentUser.getCandidateProfile() == null) {
+        throw new AccessDeniedException("Not authorized to view applications");
+    }
+
+    List<Application> applications = applicationRepository
+        .findByCandidateId(currentUser.getCandidateProfile().getId());
+    
+    return applications.stream()
+        .map(this::mapToApplicationDetailDTO)
+        .collect(Collectors.toList());
+}
+
+@Override
+public ApplicationDetailDTO getCandidateApplicationDetail(Long applicationId) {
+    User currentUser = SecurityUtils.getCurrentUser();
+    if (currentUser == null || currentUser.getCandidateProfile() == null) {
+        throw new AccessDeniedException("Not authorized to view application details");
+    }
+
+    Application application = applicationRepository.findById(applicationId)
+        .orElseThrow(() -> new ResourceNotFoundException("Application not found"));
+
+    // Verify the application belongs to the current candidate
+    if (!application.getCandidate().getId().equals(currentUser.getCandidateProfile().getId())) {
+        throw new AccessDeniedException("Not authorized to view this application");
+    }
+
+    return mapToApplicationDetailDTO(application);
+}
+   
     private DashboardStatsDTO calculateStats(List<Job> jobs, List<Application> allApplications,
                                              List<Application> periodApplications) {
         DashboardStatsDTO stats = new DashboardStatsDTO();
@@ -173,6 +232,84 @@ public class DashboardServiceImpl implements DashboardService {
 
         return stats;
     }
+
+    private CandidateDashboardStatsDTO calculateCandidateStats(List<Application> allApplications, 
+                                                          List<Application> periodApplications) {
+    CandidateDashboardStatsDTO stats = new CandidateDashboardStatsDTO();
+
+    // Set total applications
+    stats.setTotalApplications((long) allApplications.size());
+
+    // Calculate applications by status
+    Map<String, Long> statusDistribution = allApplications.stream()
+        .collect(Collectors.groupingBy(
+            app -> app.getStatus().name(),
+            Collectors.counting()
+        ));
+    stats.setApplicationsByStatus(statusDistribution);
+
+    // Get recent applications
+    List<ApplicationSummaryDTO> recentApplications = allApplications.stream()
+        .sorted(Comparator.comparing(Application::getCreatedAt).reversed())
+        .limit(5)
+        .map(this::mapToApplicationSummary)
+        .collect(Collectors.toList());
+    stats.setRecentApplications(recentApplications);
+
+    // Calculate application trend
+    Map<String, Long> applicationTrend = new LinkedHashMap<>();
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+    periodApplications.stream()
+        .collect(Collectors.groupingBy(
+            app -> app.getCreatedAt().format(formatter),
+            Collectors.counting()
+        ))
+        .entrySet().stream()
+        .sorted(Map.Entry.comparingByKey())
+        .forEach(entry -> applicationTrend.put(entry.getKey(), entry.getValue()));
+
+    stats.setApplicationTrendByDate(applicationTrend);
+
+    return stats;
+}
+private CandidateDashboardStatsDTO.ApplicationSummaryDTO mapToApplicationSummary(Application application) {
+        CandidateDashboardStatsDTO.ApplicationSummaryDTO summary = 
+            new CandidateDashboardStatsDTO.ApplicationSummaryDTO();
+        summary.setId(application.getId());
+        summary.setJobId(application.getJob().getJobId());
+        summary.setJobTitle(application.getJob().getTitle());
+        summary.setCompanyName(application.getJob().getCompany().getCompanyName());
+        summary.setStatus(application.getStatus().name());
+        summary.setAppliedDate(application.getCreatedAt());
+        summary.setLastUpdated(application.getUpdatedAt());
+        return summary;
+    }
+
+    private ApplicationDetailDTO mapToApplicationDetailDTO(Application application) {
+    return ApplicationDetailDTO.builder()
+        .id(application.getId())
+        .jobId(application.getJob().getJobId())
+        .jobTitle(application.getJob().getTitle())
+        .companyName(application.getJob().getCompany().getCompanyName())
+        .resumeUrl(application.getResumeUrl())
+        .coverLetter(application.getCoverLetter())
+        .status(application.getStatus().name())
+        .appliedDate(application.getCreatedAt())
+        .lastUpdated(application.getUpdatedAt())
+        // .statusHistory(getApplicationStatusHistory(application))
+        .build();
+}
+
+// private List<ApplicationStatusHistoryDTO> getApplicationStatusHistory(Application application) {
+//     return application.getStatusHistory().stream()
+//         .map(history -> ApplicationStatusHistoryDTO.builder()
+//             .status(history.getStatus().name())
+//             .comment(history.getComment())
+//             .timestamp(history.getCreatedAt())
+//             .build())
+//         .collect(Collectors.toList());
+// }
 
     private DashboardStatsDTO createEmptyStats() {
         DashboardStatsDTO stats = new DashboardStatsDTO();

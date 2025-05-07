@@ -19,6 +19,7 @@ import java.util.Set;
 public interface ApplicationRepository extends JpaRepository <Application,Long> {
 
     Page<Application> findByCandidateId(Long candidateId, Pageable pageable);
+    List<Application> findByCandidateId(Long candidateId);
     // Page<Application> findByJobId(Long jobId, Pageable pageable);
     // Page<Application> findByJobIdAndStatus(Long jobId, ApplicationStatus status, Pageable pageable);
 
