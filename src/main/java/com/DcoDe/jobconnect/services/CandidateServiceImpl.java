@@ -36,8 +36,7 @@ public class CandidateServiceImpl implements CandidateService {
     private final UserRepository userRepository;
     private final SkillRepository skillRepository;
     private final PasswordEncoder passwordEncoder;
-    // private final FileStorageService fileStorageService;
-    private final S3FileStorageService fileStorageService;    
+    private final FileStorageService fileStorageService;
 
     @Override
     @Transactional

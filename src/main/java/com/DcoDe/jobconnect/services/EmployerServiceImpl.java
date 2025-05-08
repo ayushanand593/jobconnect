@@ -34,8 +34,7 @@ public class EmployerServiceImpl implements EmployerService {
     private final EmployerProfileRepository employerProfileRepository;
     private final UserRepository userRepository;
     private final CompanyRepository companyRepository;
-    // private final FileStorageService fileStorageService;
-    private final S3FileStorageService s3FileStorageService;
+    private final FileStorageService fileStorageService;
     private final JobRepository jobRepository;
 
 
@@ -138,7 +137,7 @@ public EmployerProfileDTO updateProfilePicture(MultipartFile file) {
             .orElseThrow(() -> new ResourceNotFoundException("Employer profile not found"));
 
     // Upload the file to S3 and get the URL
-    String profilePictureUrl = s3FileStorageService.uploadFile(file);
+    String profilePictureUrl = fileStorageService.uploadFile(file);
 
     // Update the profile picture URL
     profile.setProfilePictureUrl(profilePictureUrl);

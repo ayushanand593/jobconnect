@@ -61,6 +61,8 @@ private final UserDetailsServiceImpl userDetailsService;
                         // .requestMatchers(HttpMethod.POST, "/api/auth/register/candidate").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/jobs/**").permitAll()
+                        .requestMatchers("/api/files/**").permitAll()
+                        .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers("/api/companies/register").permitAll()
                         .requestMatchers("/api/companies/*/jobs").permitAll()
                         .requestMatchers("/api/companies/search").permitAll()
@@ -68,6 +70,7 @@ private final UserDetailsServiceImpl userDetailsService;
                         .requestMatchers("/api/companies/profile").permitAll() // Overridden by @PreAuthorize
                         .requestMatchers("/api/debug/auth").permitAll()
                         .requestMatchers("/api/candidates/search").permitAll()
+                      
                         // .requestMatchers("/error").permitAll()
                         .anyRequest().authenticated()
                 )

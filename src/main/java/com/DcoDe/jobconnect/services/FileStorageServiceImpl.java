@@ -54,28 +54,38 @@ import java.util.UUID;
 @Service
 public class FileStorageServiceImpl implements FileStorageService {
 
-    private final String uploadDir = "uploads/profile-pictures/";
+    @Value("${file.upload-dir:uploads}")
+    private String uploadDir;
 
     @Override
     public String uploadFile(MultipartFile file) {
         try {
-            // Ensure the upload directory exists
-            Path uploadPath = Paths.get(uploadDir);
+            // Create the upload directory if it doesn't exist
+            Path uploadPath = Paths.get(uploadDir).toAbsolutePath().normalize();
             if (!Files.exists(uploadPath)) {
                 Files.createDirectories(uploadPath);
             }
 
-            // Generate a unique file name
-            String fileName = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
-            Path filePath = uploadPath.resolve(fileName);
+            // Generate unique filename
+            String filename = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
 
-            // Save the file to the upload directory
-            Files.copy(file.getInputStream(), filePath);
+            // Copy file to the upload directory
+            Path targetLocation = uploadPath.resolve(filename);
+            Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
 
-            // Return the file URL (assuming the server serves files from the upload directory)
-            return "/uploads/profile-pictures/" + fileName;
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to upload file", e);
+            return "/uploads/" + filename;
+        } catch (IOException ex) {
+            throw new RuntimeException("Could not store file " + file.getOriginalFilename(), ex);
+        }
+    }
+
+    @Override
+    public void deleteFile(String fileUrl) {
+        try {
+            Path filePath = Paths.get(uploadDir).resolve(fileUrl).normalize();
+            Files.deleteIfExists(filePath);
+        } catch (IOException ex) {
+            throw new RuntimeException("Could not delete file " + fileUrl, ex);
         }
     }
 }
